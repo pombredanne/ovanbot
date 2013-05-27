@@ -22,6 +22,14 @@ fn read_lines(sock: &tcp::TcpSocket,
     return buf;
 }
 
+fn starts_with(s: &str, needle: &str) -> bool {
+    if s.len() < needle.len() {
+        false
+    } else {
+        s.substr(0, needle.len()) == needle
+    }
+}
+
 fn main() {
     let args = os::args();
     let program = copy args[0];
@@ -81,9 +89,12 @@ fn main() {
     irc_write(fmt!("USER %s 0 ? * :Ovan Bot", nick));
 
     let on_line = |s: &str| {
+        let s = s.trim_right();
         io::println(s);
-        if str::contains(s, ":Welcome") {
+        if str::contains(s, ":Welcome ") {
             irc_write("JOIN #swolepatrol");
+        } else if starts_with(s, "PING") {
+            irc_write(fmt!("PONG %s", host));
         }
         true
     };
