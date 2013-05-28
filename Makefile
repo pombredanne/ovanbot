@@ -1,15 +1,8 @@
-CFLAGS := -std=c++11 -g -pthread
-LIBS := -lboost_system -lboost_program_options -lre2
-
-.PHONY: all
-all: bot
-
-bot.o: bot.cc bot.h
-	$(CXX) $(CFLAGS) -c $<
-
-bot: bot.o main.cc
-	$(CXX) $(CFLAGS) $^ $(LIBS) -o $@
+bot:
+	make -C src
+	@cp src/bot .
 
 .PHONY: clean
 clean:
-	-rm -f bot.o bot
+	rm -f bot
+	make -C src clean
