@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// Copyright 2012, Evan Klitzke <evan@eklitzke.org>
+// Copyright 2013, Evan Klitzke <evan@eklitzke.org>
 
 #include "./bot.h"
 
@@ -14,19 +14,40 @@
 #include <fstream>
 #include <iomanip>
 #include <iterator>
+#include <memory>
 
 using boost::asio::ip::tcp;
 
 namespace {
-re2::RE2 join_re("^join #(.*)");
+// PM commands
+re2::RE2 comm_join_re("^join #(.*)");
+
+// IRC commands
+const std::string user_ = "^:(\\S+)!\\S+ ";
+
+// :evan_!evan@24.205.85.74 JOIN :#test
+re2::RE2 join_re(user_ + "JOIN :(.+)");
+
+// :evan_!evan@24.205.85.74 PART #test :lol
+re2::RE2 part_re(user_ + "PART (\\S+) :(.*)");
+
+// PING :irc.freenode.net
 re2::RE2 ping_re("^PING :(.+)");
-re2::RE2 privmsg_re("^:(\\S+)!\\S+ PRIVMSG (\\S+) :(.+)");
+
+// :evan!evan@204.236.178.63 PRIVMSG #test :yay
+re2::RE2 privmsg_re(user_ + "PRIVMSG (\\S+) :(.+)");
+
+// :evan_!evan@24.205.85.74 QUIT :Quit: leaving
+re2::RE2 quit_re(user_ + "QUIT :(.+)");
 
 struct CheckRegexes {
   CheckRegexes() {
+    assert(comm_join_re.ok());
     assert(join_re.ok());
+    assert(part_re.ok());
     assert(ping_re.ok());
     assert(privmsg_re.ok());
+    assert(quit_re.ok());
   }
 };
 
@@ -112,15 +133,15 @@ void IRCRobot::SendLine(std::string msg) {
     msg += '\n';
   }
 
-  char *allocated_buf = new char[msg.size()];
-  memcpy(allocated_buf, msg.data(), msg.size());
-  outgoing_.push_back(allocated_buf);
+  outgoing_.emplace_back(std::unique_ptr<char[]>(new char[msg.size()]));
+  char *data_location = outgoing_.back().get();
+  memcpy(data_location, msg.data(), msg.size());
   boost::asio::async_write(
       socket_,
-      boost::asio::buffer(allocated_buf, msg.size()),
+      boost::asio::buffer(data_location, msg.size()),
       boost::bind(
           &IRCRobot::HandleWrite, this,
-          allocated_buf,
+          data_location,
           boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
 }
@@ -166,6 +187,12 @@ void IRCRobot::HandleLine(const std::string &line) {
     HandlePrivmsg(string1.as_string(),
                   string2.as_string(),
                   string3.as_string());
+  } else if (RE2::FullMatch(line, join_re, &string1, &string2)) {
+    HandleJoin(string1.as_string(), string2.as_string());
+  } else if (RE2::FullMatch(line, quit_re, &string1, &string2)) {
+    HandleQuit(string1.as_string(), string2.as_string());
+  } else if (RE2::FullMatch(line, part_re, &string1, &string2, &string3)) {
+    HandlePart(string1.as_string(), string2.as_string(), string3.as_string());
   }
 }
 
@@ -185,17 +212,30 @@ void IRCRobot::HandlePrivmsg(const std::string &from_user,
             << " " << from_user << ": " << msg << "\n";
   } else if (from_user == owner_ ){
     std::string s;
-    if (RE2::FullMatch(msg, join_re, &s)) {
+    if (RE2::FullMatch(msg, comm_join_re, &s)) {
       SendLine("JOIN #" + s);
     }
   }
 }
 
+void IRCRobot::HandleJoin(const std::string &user,
+                          const std::string &channel) {
+}
+
+void IRCRobot::HandleQuit(const std::string &user,
+                          const std::string &reason) {
+}
+
+void IRCRobot::HandlePart(const std::string &user,
+                          const std::string &channel,
+                          const std::string &reason) {
+}
+
+
 void IRCRobot::HandleWrite(const char *outgoing_msg,
                            const boost::system::error_code& error,
                            size_t bytes_transferred) {
-  assert(!outgoing_.empty() && outgoing_.front() == outgoing_msg);
-  delete outgoing_.front();
+  assert(!outgoing_.empty() && outgoing_.front().get() == outgoing_msg);
   outgoing_.erase(outgoing_.begin());
   if (error)  {
     std::cerr << "Write error: " << error;

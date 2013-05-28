@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// Copyright 2012, Evan Klitzke <evan@eklitzke.org>
+// Copyright 2013, Evan Klitzke <evan@eklitzke.org>
 
 #include <stdio.h>
 #include <syslog.h>
@@ -46,11 +46,11 @@ int main(int argc, char **argv) {
     std::cout << "\nmissing --host\n";
     return 0;
   }
-  const std::string host = vm["host"].as<std::string>();
 
   boost::asio::io_service io_service;
 
   // initiate the name resolution
+  const std::string host = vm["host"].as<std::string>();
   const std::uint16_t port = vm["port"].as<std::uint16_t>();
   const std::string str_port = boost::lexical_cast<std::string>(port);
   boost::asio::ip::tcp::resolver resolver(io_service);

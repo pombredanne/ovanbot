@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// Copyright 2012, Evan Klitzke <evan@eklitzke.org>
+// Copyright 2013, Evan Klitzke <evan@eklitzke.org>
 
 #ifndef BOT_H_
 #define BOT_H_
@@ -7,6 +7,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -37,7 +38,8 @@ class IRCRobot {
   const std::string password_;
   const std::string owner_;
 
-  std::vector<char *> outgoing_;  // storage for outgoing messages
+  // storage for outgoing messages
+  std::vector<std::unique_ptr<char[]> > outgoing_;
   std::string extra_data_;
   boost::asio::streambuf request_;
 
@@ -47,9 +49,17 @@ class IRCRobot {
   void HandleTimeout(const boost::system::error_code&);
   void HandleRead(const boost::system::error_code &, size_t);
   void HandleLine(const std::string &line);
+
   void HandlePrivmsg(const std::string &from_user,
                      const std::string &channel,
                      const std::string &msg);
+  void HandleJoin(const std::string &user,
+                  const std::string &channel);
+  void HandlePart(const std::string &user,
+                  const std::string &channel,
+                  const std::string &reason);
+  void HandleQuit(const std::string &user,
+                  const std::string &reason);
 
   void SendLine(std::string);
 };
