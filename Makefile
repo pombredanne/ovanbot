@@ -4,7 +4,7 @@ LIBS := -lboost_system -lboost_program_options -lre2
 .PHONY: all
 all: bot
 
-bot.o: bot.cc
+bot.o: bot.cc bot.h
 	$(CXX) $(CFLAGS) -c $<
 
 bot: bot.o main.cc

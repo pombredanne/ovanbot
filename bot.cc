@@ -236,7 +236,7 @@ void IRCRobot::HandleWrite(const char *outgoing_msg,
                            const boost::system::error_code& error,
                            size_t bytes_transferred) {
   assert(!outgoing_.empty() && outgoing_.front().get() == outgoing_msg);
-  outgoing_.erase(outgoing_.begin());
+  outgoing_.pop_front();
   if (error)  {
     std::cerr << "Write error: " << error;
   }

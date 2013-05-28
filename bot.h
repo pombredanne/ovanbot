@@ -7,9 +7,9 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#include <list>
 #include <memory>
 #include <string>
-#include <vector>
 
 using boost::asio::ip::tcp;
 
@@ -39,7 +39,7 @@ class IRCRobot {
   const std::string owner_;
 
   // storage for outgoing messages
-  std::vector<std::unique_ptr<char[]> > outgoing_;
+  std::list<std::unique_ptr<char[]> > outgoing_;
   std::string extra_data_;
   boost::asio::streambuf request_;
 
