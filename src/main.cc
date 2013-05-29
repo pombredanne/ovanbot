@@ -13,9 +13,19 @@
 #include <vector>
 
 #include "./bot.h"
+#include "./logfile.h"
 
 namespace po = boost::program_options;
 using boost::asio::ip::resolver_query_base;
+
+namespace {
+struct Context {
+  Context() {}
+  ~Context() {
+    ovanbot::FlushLogs();
+  }
+};
+}
 
 int main(int argc, char **argv) {
   po::options_description desc("Allowed options");
@@ -63,8 +73,11 @@ int main(int argc, char **argv) {
   const std::string pass = vm["password"].as<std::string>();
   ovanbot::IRCRobot robot(io_service, nick, pass, owner);
 
-  robot.Connect(iterator);
-  io_service.run();
+  {
+    Context ctx;
+    robot.Connect(iterator);
+    io_service.run();
+  }
 
   return 0;
 }

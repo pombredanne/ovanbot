@@ -1,5 +1,6 @@
+.PHONY: bot
 bot:
-	make -C src
+	make -C src bot
 	@cp src/bot .
 
 .PHONY: clean

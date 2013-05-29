@@ -16,6 +16,8 @@
 #include <iterator>
 #include <memory>
 
+#include "./logfile.h"
+
 using boost::asio::ip::tcp;
 
 namespace {
@@ -200,16 +202,7 @@ void IRCRobot::HandlePrivmsg(const std::string &from_user,
                              const std::string &channel,
                              const std::string &msg) {
   if (channel.front() == '#') {
-    // Log messages to channels (not PMs from users)
-    std::time_t now;
-    time(&now);
-    struct tm *timeinfo = localtime(&now);
-    static char fmt_time[128];
-    strftime(fmt_time, sizeof(fmt_time), "%F %T", timeinfo);
-
-    std::ofstream logfile(channel + ".log", std::ios::app);
-    logfile << fmt_time
-            << " " << from_user << ": " << msg << "\n";
+    Log(channel, from_user + ": " + msg);
   } else if (from_user == owner_ ){
     std::string s;
     if (RE2::FullMatch(msg, comm_join_re, &s)) {
@@ -220,6 +213,7 @@ void IRCRobot::HandlePrivmsg(const std::string &from_user,
 
 void IRCRobot::HandleJoin(const std::string &user,
                           const std::string &channel) {
+  Log(channel, "<--- " + user + " joins");
 }
 
 void IRCRobot::HandleQuit(const std::string &user,
@@ -229,6 +223,7 @@ void IRCRobot::HandleQuit(const std::string &user,
 void IRCRobot::HandlePart(const std::string &user,
                           const std::string &channel,
                           const std::string &reason) {
+  Log(channel, "---> " + user + " parts");
 }
 
 
