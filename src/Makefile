@@ -5,13 +5,10 @@ SRCS := bot.cc bot.h
 .PHONY: all
 all: bot
 
-bot.o: bot.cc bot.h
+%.o: %.cc %.h
 	$(CXX) $(CFLAGS) -c $<
 
-logfile.o: logfile.cc logfile.h
-	$(CXX) $(CFLAGS) -c $<
-
-bot: bot.o logfile.o main.cc
+bot: bot.o plugin_karma.o plugin_logging.o plugin_owner.o plugin.o main.cc
 	$(CXX) $(CFLAGS) $^ $(LIBS) -o $@
 
 .PHONY: clean

@@ -16,14 +16,12 @@
 #include <iterator>
 #include <memory>
 
-#include "./logfile.h"
+#include "./plugin_logging.h"
+#include "./plugin_owner.h"
 
 using boost::asio::ip::tcp;
 
 namespace {
-// PM commands
-re2::RE2 comm_join_re("^join #(.*)");
-
 // IRC commands
 const std::string user_ = "^:(\\S+)!\\S+ ";
 
@@ -44,7 +42,6 @@ re2::RE2 quit_re(user_ + "QUIT :(.+)");
 
 struct CheckRegexes {
   CheckRegexes() {
-    assert(comm_join_re.ok());
     assert(join_re.ok());
     assert(part_re.ok());
     assert(ping_re.ok());
@@ -84,7 +81,13 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
      socket_(service),
      nick_(nick),
      password_(password),
-     owner_(owner) {}
+     owner_(owner) {
+  plugins_.push_back(std::move(std::unique_ptr<Plugin>(new OwnerPlugin())));
+  plugins_.push_back(std::move(std::unique_ptr<Plugin>(new LoggingPlugin())));
+  for (auto &p : plugins_) {
+    p->set_robot(this);
+  }
+}
 
 
 void IRCRobot::Connect(boost::asio::ip::tcp::resolver::iterator
@@ -186,46 +189,20 @@ void IRCRobot::HandleLine(const std::string &line) {
   if (RE2::FullMatch(line, ping_re, &string1)) {
     SendLine("PONG " + string1.as_string());
   } else if (RE2::FullMatch(line, privmsg_re, &string1, &string2, &string3)) {
-    HandlePrivmsg(string1.as_string(),
-                  string2.as_string(),
-                  string3.as_string());
-  } else if (RE2::FullMatch(line, join_re, &string1, &string2)) {
-    HandleJoin(string1.as_string(), string2.as_string());
-  } else if (RE2::FullMatch(line, quit_re, &string1, &string2)) {
-    HandleQuit(string1.as_string(), string2.as_string());
-  } else if (RE2::FullMatch(line, part_re, &string1, &string2, &string3)) {
-    HandlePart(string1.as_string(), string2.as_string(), string3.as_string());
-  }
-}
+    for (auto &plugin : plugins_) {
+      plugin->HandlePrivmsg(string1.as_string(),
+                            string2.as_string(),
+                            string3.as_string());
 
-void IRCRobot::HandlePrivmsg(const std::string &from_user,
-                             const std::string &channel,
-                             const std::string &msg) {
-  if (channel.front() == '#') {
-    Log(channel, from_user + ": " + msg);
-  } else if (from_user == owner_ ){
-    std::string s;
-    if (RE2::FullMatch(msg, comm_join_re, &s)) {
-      SendLine("JOIN #" + s);
     }
+  } else if (RE2::FullMatch(line, join_re, &string1, &string2)) {
+    //    HandleJoin(string1.as_string(), string2.as_string());
+  } else if (RE2::FullMatch(line, quit_re, &string1, &string2)) {
+    //    HandleQuit(string1.as_string(), string2.as_string());
+  } else if (RE2::FullMatch(line, part_re, &string1, &string2, &string3)) {
+    //    HandlePart(string1.as_string(), string2.as_string(), string3.as_string());
   }
 }
-
-void IRCRobot::HandleJoin(const std::string &user,
-                          const std::string &channel) {
-  Log(channel, "<--- " + user + " joins");
-}
-
-void IRCRobot::HandleQuit(const std::string &user,
-                          const std::string &reason) {
-}
-
-void IRCRobot::HandlePart(const std::string &user,
-                          const std::string &channel,
-                          const std::string &reason) {
-  Log(channel, "---> " + user + " parts");
-}
-
 
 void IRCRobot::HandleWrite(const char *outgoing_msg,
                            const boost::system::error_code& error,

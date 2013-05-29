@@ -11,11 +11,13 @@
 #include <memory>
 #include <string>
 
+#include "./plugin.h"
+
 using boost::asio::ip::tcp;
 
 namespace ovanbot {
 
-enum { MAX_LENGTH = 8096 };
+class Plugin;
 
 class IRCRobot {
  public:
@@ -29,6 +31,10 @@ class IRCRobot {
                     const std::string &);
   void AddChannel(const std::string &);
 
+  inline const std::string& owner() const { return owner_; }
+
+  void SendLine(std::string);
+
  private:
   boost::asio::io_service &io_service_;
   boost::asio::deadline_timer timer_;
@@ -37,6 +43,8 @@ class IRCRobot {
   const std::string nick_;
   const std::string password_;
   const std::string owner_;
+
+  std::vector<std::unique_ptr<Plugin> > plugins_;
 
   // storage for outgoing messages
   std::list<std::unique_ptr<char[]> > outgoing_;
@@ -49,19 +57,6 @@ class IRCRobot {
   void HandleTimeout(const boost::system::error_code&);
   void HandleRead(const boost::system::error_code &, size_t);
   void HandleLine(const std::string &line);
-
-  void HandlePrivmsg(const std::string &from_user,
-                     const std::string &channel,
-                     const std::string &msg);
-  void HandleJoin(const std::string &user,
-                  const std::string &channel);
-  void HandlePart(const std::string &user,
-                  const std::string &channel,
-                  const std::string &reason);
-  void HandleQuit(const std::string &user,
-                  const std::string &reason);
-
-  void SendLine(std::string);
 };
 }
 

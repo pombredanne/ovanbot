@@ -1,3 +1,5 @@
 bot
 *.o
 *.log
+*.pb.cc
+*.pb.h
