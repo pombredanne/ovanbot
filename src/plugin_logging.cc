@@ -54,7 +54,7 @@ void LoggingPlugin::Log(const std::string &logger, const std::string &msg) {
         it, std::make_pair(logger, std::unique_ptr<Logger>(new Logger(full_name))));
   } else if (it->second->FileName() != full_name) {
     loggers_.erase(it);
-    it = loggers_.insert(std::make_pair(
+    loggers_.insert(std::make_pair(
         logger, std::unique_ptr<Logger>(new Logger(full_name))));
   }
   it->second->LogLine(msg);
