@@ -14,9 +14,13 @@
 namespace ovanbot {
 class Logger {
  public:
+  Logger() = delete;
   Logger(const std::string &logname);
+  Logger(const Logger &other) = delete;
+
   inline const std::string& FileName() const { return logname_; }
   void LogLine(const std::string &str);
+  void Rotate(const std::string &name);
 
  private:
   std::string logname_;

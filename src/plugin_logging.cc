@@ -16,6 +16,17 @@ Logger::Logger(const std::string &logname)
     :logname_(logname),
      logfile_(logname, std::ios::app) {}
 
+void Logger::Rotate(const std::string &name) {
+#if 0
+  // for newer compilers
+  std::ofstream new_file(name, std::ios::app);
+  logfile_.swap(new_file);
+#else
+  logfile_.close();
+  logfile_.open(name, std::ios::app);
+#endif
+}
+
 
 void Logger::LogLine(const std::string &str) {
   std::time_t now;
@@ -50,12 +61,15 @@ void LoggingPlugin::Log(const std::string &logger, const std::string &msg) {
 
   auto it = loggers_.lower_bound(logger);
   if (it == loggers_.end() || it->first != logger) {
-    it = loggers_.insert(
-        it, std::make_pair(logger, std::unique_ptr<Logger>(new Logger(full_name))));
-  } else if (it->second->FileName() != full_name) {
-    loggers_.erase(it);
-    loggers_.insert(std::make_pair(
+#if 0
+    it = loggers_.emplace_hint(it, {logger, full_name});
+#else
+    auto p = loggers_.insert(std::make_pair(
         logger, std::unique_ptr<Logger>(new Logger(full_name))));
+    it = p.first;
+#endif
+  } else if (it->second->FileName() != full_name) {
+    it->second->Rotate(full_name);
   }
   it->second->LogLine(msg);
 }
