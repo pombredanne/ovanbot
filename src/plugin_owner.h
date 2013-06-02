@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "./plugin.h"
+#include "./bot.h"
 
 namespace ovanbot {
 class OwnerPlugin : public Plugin {

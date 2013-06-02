@@ -7,7 +7,7 @@
 #include "./plugin_owner.h"
 
 namespace {
-re2::RE2 join_re("^join #(.*)$");
+re2::RE2 join_re("^join (#.*)$");
 }
 
 namespace ovanbot {
@@ -17,7 +17,7 @@ void OwnerPlugin::HandlePrivmsg(const std::string &user,
   if (!IsChannel(channel) && user == robot_->owner()) {
     std::string target;
     if (RE2::FullMatch(msg, join_re, &target)) {
-      robot_->SendLine("JOIN #" + target);
+      robot_->Join(target);
     }
   }
 }
