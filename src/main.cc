@@ -17,6 +17,8 @@
 namespace po = boost::program_options;
 using boost::asio::ip::resolver_query_base;
 
+ovanbot::IRCRobot *bot;
+
 int main(int argc, char **argv) {
   po::options_description desc("Allowed options");
   desc.add_options()

@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-#include "./plugin.h"
+#include "./bot.h"
 
 namespace ovanbot {
 class Logger {

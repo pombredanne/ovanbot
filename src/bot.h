@@ -11,8 +11,6 @@
 #include <memory>
 #include <string>
 
-#include "./plugin.h"
-
 using boost::asio::ip::tcp;
 
 namespace ovanbot {
@@ -33,7 +31,8 @@ class IRCRobot {
 
   inline const std::string& owner() const { return owner_; }
 
-  void SendLine(std::string);
+  void SendPrivmsg(const std::string &target, const std::string &msg);
+  void Join(const std::string &target);
 
  private:
   boost::asio::io_service &io_service_;
@@ -57,7 +56,26 @@ class IRCRobot {
   void HandleTimeout(const boost::system::error_code&);
   void HandleRead(const boost::system::error_code &, size_t);
   void HandleLine(const std::string &line);
+
+  void SendLine(std::string);
 };
+
+class Plugin {
+ public:
+  virtual ~Plugin() {}
+  inline void set_robot(IRCRobot *robot) { robot_ = robot; }
+  virtual void HandlePrivmsg(const std::string &user,
+                             const std::string &channel,
+                             const std::string &msg);
+
+ protected:
+  IRCRobot *robot_;
+
+  inline bool IsChannel(const std::string &str) {
+    return !str.empty() && str.front() == '#';
+  }
+};
+
 }
 
 #endif  // BOT_H_

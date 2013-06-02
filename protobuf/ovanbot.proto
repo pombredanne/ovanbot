@@ -1,10 +1,9 @@
 package ovanbot;
 
-
 message KarmaMap {
-  message KarmaAmt {
+  message Karma {
     required string entity = 1;
     required int32 karma   = 2;
   };
-  repeated KarmaMap karma_list = 1;
+  repeated Karma karma_list = 1;
 }

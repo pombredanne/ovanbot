@@ -16,6 +16,7 @@
 #include <iterator>
 #include <memory>
 
+#include "./plugin_karma.h"
 #include "./plugin_logging.h"
 #include "./plugin_owner.h"
 
@@ -82,8 +83,12 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
      nick_(nick),
      password_(password),
      owner_(owner) {
-  plugins_.push_back(std::move(std::unique_ptr<Plugin>(new OwnerPlugin())));
+  // logging first
   plugins_.push_back(std::move(std::unique_ptr<Plugin>(new LoggingPlugin())));
+
+  // other modules in alphabetical order
+  plugins_.push_back(std::move(std::unique_ptr<Plugin>(new KarmaPlugin())));
+  plugins_.push_back(std::move(std::unique_ptr<Plugin>(new OwnerPlugin())));
   for (auto &p : plugins_) {
     p->set_robot(this);
   }
@@ -151,6 +156,14 @@ void IRCRobot::SendLine(std::string msg) {
           boost::asio::placeholders::bytes_transferred));
 }
 
+void IRCRobot::SendPrivmsg(const std::string &target, const std::string &msg) {
+  SendLine("PRIVMSG " + target + " " + msg);
+}
+
+void IRCRobot::Join(const std::string &target) {
+  SendLine("JOIN " + target);
+}
+
 void IRCRobot::HandleRead(const boost::system::error_code &error,
                           size_t bytes_transferred) {
   std::string lines = extra_data_ + std::string(
@@ -213,4 +226,8 @@ void IRCRobot::HandleWrite(const char *outgoing_msg,
     std::cerr << "Write error: " << error;
   }
 }
+
+void Plugin::HandlePrivmsg(const std::string &user,
+                           const std::string &channel,
+                           const std::string &msg) {}
 }

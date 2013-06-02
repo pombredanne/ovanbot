@@ -3,3 +3,4 @@ bot
 *.log
 *.pb.cc
 *.pb.h
+*.pb
